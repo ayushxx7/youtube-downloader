@@ -158,6 +158,7 @@ def main():
         )
         # Video Quality Selection
         selected_video_format = None
+        convert_to_whatsapp = False
         if download_type == "Video + Audio":
             st.subheader("🎬 Video Quality")
             available_formats = video_info.get('formats', [])
@@ -205,6 +206,8 @@ def main():
                     key="video_quality_selectbox"
                 )
                 selected_video_format = next(fmt for fmt in video_formats if fmt['label'] == st.session_state['video_quality'])
+                # WhatsApp conversion checkbox
+                convert_to_whatsapp = st.checkbox("Convert to WhatsApp shareable format (MP4, 720p, H.264/AAC)", value=False, key="whatsapp_convert_checkbox")
             else:
                 st.error("No video formats available for this video.")
                 return
@@ -266,12 +269,18 @@ def main():
                         if not selected_video_format:
                             st.error("No video format selected. Please select a video quality.")
                             return
+                        # Download video
                         output_path = downloader.download_video(
                             url,
                             temp_dir,
                             selected_video_format['format_id'],
                             progress_callback
                         )
+                        # Optionally convert to WhatsApp format
+                        if convert_to_whatsapp and output_path:
+                            whatsapp_path = downloader.convert_to_whatsapp_mp4(output_path)
+                            if whatsapp_path:
+                                output_path = whatsapp_path
                     else:
                         output_path = downloader.download_audio(
                             url,
@@ -300,15 +309,13 @@ def main():
         if st.session_state['download_complete'] and st.session_state['download_path']:
             st.success("✅ Download completed successfully!")
             file_path = st.session_state['download_path']
-            # Show file path with WhatsApp share button
+            # Show file path with WhatsApp share instructions
             col_fp, col_wa = st.columns([8, 1])
             with col_fp:
                 st.code(file_path, language="text")
             with col_wa:
-                wa_message = f"Check out this video I downloaded: {file_path}"
-                wa_url = f"https://wa.me/?text={wa_message.replace(' ', '%20')}"
                 st.markdown(f'''
-                    <a href="{wa_url}" target="_blank" style="display:inline-block;background:#25D366;padding:0.5em 1.2em;border-radius:6px;color:#fff;font-weight:bold;font-size:1.05em;box-shadow:0 2px 8px #ccc;text-decoration:none;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:center;" title="Share on WhatsApp">
+                    <a href="https://web.whatsapp.com/" target="_blank" style="display:inline-block;background:#25D366;padding:0.5em 1.2em;border-radius:6px;color:#fff;font-weight:bold;font-size:1.05em;box-shadow:0 2px 8px #ccc;text-decoration:none;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:center;" title="Open WhatsApp Web">
                         <span style="vertical-align:middle;">🟢</span>
                     </a>
                 ''', unsafe_allow_html=True)

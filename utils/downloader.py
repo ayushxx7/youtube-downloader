@@ -54,7 +54,7 @@ class YouTubeDownloader:
             return None
     
     def download_video(self, url, output_dir, format_id=None, progress_callback=None):
-        """Download video with specified format"""
+        """Download video with specified format and convert to WhatsApp-compatible MP4"""
         try:
             # Create progress hook
             def progress_hook(d):
@@ -107,6 +107,25 @@ class YouTubeDownloader:
                 
         except Exception as e:
             print(f"Error downloading video: {str(e)}")
+            return None
+
+    def convert_to_whatsapp_mp4(self, input_path):
+        """Convert a video to WhatsApp-compatible MP4 (H.264/AAC, max 720p) using ffmpeg"""
+        try:
+            output_path = os.path.splitext(input_path)[0] + '_whatsapp.mp4'
+            # ffmpeg command: re-encode to H.264/AAC, max 720p
+            cmd = [
+                'ffmpeg', '-y', '-i', input_path,
+                '-vf', 'scale=w=1280:h=720:force_original_aspect_ratio=decrease',
+                '-c:v', 'libx264', '-preset', 'fast', '-crf', '23',
+                '-c:a', 'aac', '-b:a', '128k',
+                '-movflags', '+faststart',
+                output_path
+            ]
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return output_path if os.path.exists(output_path) else None
+        except Exception as e:
+            print(f"Error converting to WhatsApp MP4: {str(e)}")
             return None
     
     def download_audio(self, url, output_dir, audio_format='mp3', quality='best', progress_callback=None):
