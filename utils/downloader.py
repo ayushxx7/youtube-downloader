@@ -27,6 +27,7 @@ class YouTubeDownloader:
                 'no_warnings': False,
                 'socket_timeout': 30,
                 'retries': 3,
+                'noplaylist': True,  # Only single video
             }
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -80,6 +81,7 @@ class YouTubeDownloader:
                 'retries': 3,
                 'quiet': False,
                 'no_warnings': False,
+                'noplaylist': True,  # Only single video
             }
             
             # Set format if specified
@@ -138,6 +140,7 @@ class YouTubeDownloader:
                 'retries': 3,
                 'quiet': False,
                 'no_warnings': False,
+                'noplaylist': True,  # Only single video
             }
             
             # Set audio quality
@@ -227,6 +230,7 @@ class YouTubeDownloader:
             ydl_opts = {
                 **self.ydl_opts_base,
                 'listformats': True,
+                'noplaylist': True,  # Only single video
             }
             
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
