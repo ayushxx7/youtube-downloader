@@ -299,7 +299,24 @@ def main():
         # Show download status and file path
         if st.session_state['download_complete'] and st.session_state['download_path']:
             st.success("✅ Download completed successfully!")
-            st.code(st.session_state['download_path'], language="text")
+            file_path = st.session_state['download_path']
+            # Show file path with WhatsApp share button
+            col_fp, col_wa = st.columns([8, 1])
+            with col_fp:
+                st.code(file_path, language="text")
+            with col_wa:
+                wa_message = f"Check out this video I downloaded: {file_path}"
+                wa_url = f"https://wa.me/?text={wa_message.replace(' ', '%20')}"
+                st.markdown(f'''
+                    <a href="{wa_url}" target="_blank" style="display:inline-block;background:#25D366;padding:0.5em 1.2em;border-radius:6px;color:#fff;font-weight:bold;font-size:1.05em;box-shadow:0 2px 8px #ccc;text-decoration:none;width:100%;max-width:100%;min-width:0;box-sizing:border-box;text-align:center;" title="Share on WhatsApp">
+                        <span style="vertical-align:middle;">🟢</span>
+                    </a>
+                ''', unsafe_allow_html=True)
+            # Video preview if file is a video
+            video_exts = [".mp4", ".webm", ".mkv", ".mov", ".avi"]
+            if any(file_path.lower().endswith(ext) for ext in video_exts):
+                st.markdown("**Preview:**")
+                st.video(file_path)
             if st.button("🔄 Download Another Video", use_container_width=True, key="download_another"):
                 reset_session_state()
                 st.rerun()
