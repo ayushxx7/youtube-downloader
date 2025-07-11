@@ -63,13 +63,34 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+st.markdown("""
+    <style>
+    button[data-testid="stCodeCopyButton"] {
+        background-color: #FF0000 !important;
+        color: white !important;
+        border-radius: 6px !important;
+        padding: 0.25em 0.5em !important;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2) !important;
+        transition: background 0.3s ease;
+    }
+
+    button[data-testid="stCodeCopyButton"]:hover {
+        background-color: #cc0000 !important;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3) !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 def main():
     # URL Input Section
-    st.header("📋 Enter YouTube URL & press Enter or click the Download button")
+    st.header("📋 Enter YouTube URL")
+    def on_url_entered():
+        st.session_state['start_download'] = True
     url = st.text_input(
         "YouTube URL",
         placeholder="https://www.youtube.com/watch?v=example or https://youtube.com/shorts/example",
-        help="Enter a valid YouTube video or shorts URL"
+        help="Enter a valid YouTube video or shorts URL",
+        on_change=on_url_entered
     )
     download_type = st.radio(
         "Type",
@@ -279,7 +300,6 @@ def main():
         if st.session_state['download_complete'] and st.session_state['download_path']:
             st.success("✅ Download completed successfully!")
             st.code(st.session_state['download_path'], language="text")
-            st.button("Copy File Path", key="copy_file_path_main", on_click=lambda: st.session_state.update({'_clipboard': st.session_state['download_path']}))
             if st.button("🔄 Download Another Video", use_container_width=True, key="download_another"):
                 reset_session_state()
                 st.rerun()
