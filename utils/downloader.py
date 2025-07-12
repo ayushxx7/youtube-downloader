@@ -193,6 +193,35 @@ class YouTubeDownloader:
             print(f"Error downloading audio: {str(e)}")
             return None
     
+    def add_branding_to_video(self, main_video_path, intro_path, outro_path):
+        """Concatenate intro, main, and outro videos into a single file using ffmpeg concat filter, re-encoding to ensure audio."""
+        try:
+            temp_dir = os.path.dirname(main_video_path)
+            final_path = os.path.splitext(main_video_path)[0] + '_branded.mp4'
+            # Build input list and filter
+            input_files = []
+            filter_parts = []
+            idx = 0
+            for path in [intro_path, main_video_path, outro_path]:
+                if path and os.path.exists(path):
+                    input_files.extend(['-i', os.path.abspath(path)])
+                    filter_parts.append(f'[{idx}:v:0][{idx}:a:0]')
+                    idx += 1
+            filter_complex = ''.join(filter_parts) + f'concat=n={idx}:v=1:a=1[outv][outa]'
+            cmd = [
+                'ffmpeg', '-y', *input_files,
+                '-filter_complex', filter_complex,
+                '-map', '[outv]', '-map', '[outa]',
+                '-c:v', 'libx264', '-c:a', 'aac', '-b:a', '128k',
+                '-movflags', '+faststart',
+                final_path
+            ]
+            subprocess.run(cmd, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            return final_path if os.path.exists(final_path) else None
+        except Exception as e:
+            print(f"Error adding branding: {str(e)}")
+            return None
+    
     def _format_duration(self, duration):
         """Format duration in seconds to HH:MM:SS"""
         if not duration:

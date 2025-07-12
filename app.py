@@ -82,16 +82,70 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 def main():
+    # --- YouTube Search Section ---
+    st.header("🔎 Search YouTube Video")
+    if 'search_results' not in st.session_state:
+        st.session_state['search_results'] = []
+    if 'search_query' not in st.session_state:
+        st.session_state['search_query'] = ''
+    search_query = st.text_input("Search for a video", value=st.session_state['search_query'], key="yt_search_input")
+    search_btn = st.button("Search", key="yt_search_btn")
+    if search_btn and isinstance(search_query, str) and search_query.strip():
+        # Use yt-dlp to search YouTube
+        with st.spinner("Searching YouTube..."):
+            try:
+                import yt_dlp
+                ydl_opts = {
+                    'quiet': True,
+                    'skip_download': True,
+                    'extract_flat': True,
+                    'noplaylist': True,
+                }
+                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+                    info = ydl.extract_info(f"ytsearch5:{search_query}", download=False)
+                    if info and isinstance(info, dict):
+                        st.session_state['search_results'] = info.get('entries', [])
+                    else:
+                        st.session_state['search_results'] = []
+                    st.session_state['search_query'] = search_query
+            except Exception as e:
+                st.error(f"Search failed: {e}")
+                st.session_state['search_results'] = []
+    # Show search results
+    if st.session_state['search_results']:
+        st.markdown("**Select a video below:**")
+        for i, entry in enumerate(st.session_state['search_results']):
+            cols = st.columns([1, 4, 3])
+            with cols[0]:
+                thumb_url = entry.get('thumbnail')
+                if not thumb_url and 'thumbnails' in entry and isinstance(entry['thumbnails'], list) and entry['thumbnails']:
+                    # Use the last thumbnail (usually the largest)
+                    thumb_url = entry['thumbnails'][-1].get('url') if isinstance(entry['thumbnails'][-1], dict) else entry['thumbnails'][-1]
+                if thumb_url:
+                    st.image(thumb_url, width=100)
+            with cols[1]:
+                st.markdown(f"**{entry.get('title', 'No Title')}**")
+                st.caption(entry.get('uploader', ''))
+            with cols[2]:
+                video_url = entry.get('url', '')
+                st.code(video_url)
+    # --- End YouTube Search Section ---
+
     # URL Input Section
     st.header("📋 Enter YouTube URL")
     def on_url_entered():
         st.session_state['start_download'] = True
+    url_default = st.session_state.get('url_from_search', '')
     url = st.text_input(
         "YouTube URL",
+        value=url_default,
         placeholder="https://www.youtube.com/watch?v=example or https://youtube.com/shorts/example",
         help="Enter a valid YouTube video or shorts URL",
-        on_change=on_url_entered
+        on_change=on_url_entered,
+        key="yt_url_input"
     )
+    if 'url_from_search' in st.session_state:
+        del st.session_state['url_from_search']
     download_type = st.radio(
         "Type",
         ["Video + Audio", "Audio Only"],
@@ -208,6 +262,8 @@ def main():
                 selected_video_format = next(fmt for fmt in video_formats if fmt['label'] == st.session_state['video_quality'])
                 # WhatsApp conversion checkbox
                 convert_to_whatsapp = st.checkbox("Convert to WhatsApp shareable format (MP4, 720p, H.264/AAC)", value=False, key="whatsapp_convert_checkbox")
+                # Branding checkbox
+                add_branding = st.checkbox("Add branding intro/outro (Vibe Coder)", value=False, key="branding_checkbox")
             else:
                 st.error("No video formats available for this video.")
                 return
@@ -281,6 +337,13 @@ def main():
                             whatsapp_path = downloader.convert_to_whatsapp_mp4(output_path)
                             if whatsapp_path:
                                 output_path = whatsapp_path
+                        # Optionally add branding
+                        if 'add_branding' in locals() and add_branding and output_path:
+                            intro_path = 'intro.mp4'
+                            outro_path = 'outro.mp4'
+                            branded_path = downloader.add_branding_to_video(output_path, intro_path, outro_path)
+                            if branded_path:
+                                output_path = branded_path
                     else:
                         output_path = downloader.download_audio(
                             url,
@@ -324,6 +387,11 @@ def main():
             if any(file_path.lower().endswith(ext) for ext in video_exts):
                 st.markdown("**Preview:**")
                 st.video(file_path)
+            # Audio preview if file is audio
+            audio_exts = [".mp3", ".aac", ".flac", ".ogg", ".wav", ".m4a"]
+            if any(file_path.lower().endswith(ext) for ext in audio_exts):
+                st.markdown("**Audio Preview:**")
+                st.audio(file_path)
             if st.button("🔄 Download Another Video", use_container_width=True, key="download_another"):
                 reset_session_state()
                 st.rerun()
