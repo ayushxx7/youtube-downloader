@@ -88,10 +88,10 @@ def main():
         st.session_state['search_results'] = []
     if 'search_query' not in st.session_state:
         st.session_state['search_query'] = ''
-    search_query = st.text_input("Search for a video", value=st.session_state['search_query'], key="yt_search_input")
-    search_btn = st.button("Search", key="yt_search_btn")
-    if search_btn and isinstance(search_query, str) and search_query.strip():
-        with st.spinner("Searching YouTube..."):
+
+    def on_search_entered():
+        search_query = st.session_state['yt_search_input']
+        if isinstance(search_query, str) and search_query.strip():
             try:
                 from utils.downloader import search_youtube
                 results = search_youtube(search_query, max_results=5)
@@ -100,6 +100,16 @@ def main():
             except Exception as e:
                 st.error(f"Search failed: {e}")
                 st.session_state['search_results'] = []
+
+    search_query = st.text_input(
+        "Search for a video",
+        value=st.session_state['search_query'],
+        key="yt_search_input",
+        on_change=on_search_entered
+    )
+    search_btn = st.button("Search", key="yt_search_btn")
+    if search_btn:
+        on_search_entered()
     # Show search results
     if st.session_state['search_results']:
         st.markdown("**Select a video below:**")
@@ -110,6 +120,8 @@ def main():
                 if not thumb_url and 'thumbnails' in entry and isinstance(entry['thumbnails'], list) and entry['thumbnails']:
                     # Use the last thumbnail (usually the largest)
                     thumb_url = entry['thumbnails'][-1].get('url') if isinstance(entry['thumbnails'][-1], dict) else entry['thumbnails'][-1]
+                if thumb_url and thumb_url.startswith("//"):
+                    thumb_url = "https:" + thumb_url
                 if thumb_url:
                     st.image(thumb_url, width=100)
             with cols[1]:
@@ -117,7 +129,20 @@ def main():
                 st.caption(entry.get('uploader', ''))
             with cols[2]:
                 video_url = entry.get('url', '')
-                st.code(video_url)
+                cols_code, cols_btn = st.columns([8, 1])
+                with cols_code:
+                    st.code(video_url)
+                with cols_btn:
+                    st.markdown(f"""
+                        <a href=\"{video_url}\" target=\"_blank\"
+                           style=\"display:inline-flex;align-items:center;justify-content:center;background:none;width:2em;height:2em;border-radius:6px;text-decoration:none;\"
+                           title=\"Show on youtube.com\">
+                            <svg width=\"1.5em\" height=\"1.5em\" viewBox=\"0 0 24 24\" fill=\"none\" xmlns=\"http://www.w3.org/2000/svg\">
+                              <rect width=\"24\" height=\"24\" rx=\"6\" fill=\"#FF0000\"/>
+                              <polygon points=\"10,8 16,12 10,16\" fill=\"white\"/>
+                            </svg>
+                        </a>
+                    """, unsafe_allow_html=True)
     # --- End YouTube Search Section ---
 
     # URL Input Section
