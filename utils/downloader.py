@@ -288,3 +288,25 @@ class YouTubeDownloader:
         except Exception as e:
             print(f"Error getting formats: {str(e)}")
             return []
+
+def search_youtube(query, max_results=5):
+    """
+    Search YouTube using yt-dlp and return a list of video entries.
+    """
+    import yt_dlp
+    ydl_opts = {
+        'quiet': True,
+        'skip_download': True,
+        'extract_flat': True,
+        'noplaylist': True,
+    }
+    try:
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(f"ytsearch{max_results}:{query}", download=False)
+            if info and isinstance(info, dict):
+                return info.get('entries', [])
+            else:
+                return []
+    except Exception as e:
+        print(f"Search failed: {e}")
+        return []

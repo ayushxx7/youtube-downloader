@@ -91,23 +91,12 @@ def main():
     search_query = st.text_input("Search for a video", value=st.session_state['search_query'], key="yt_search_input")
     search_btn = st.button("Search", key="yt_search_btn")
     if search_btn and isinstance(search_query, str) and search_query.strip():
-        # Use yt-dlp to search YouTube
         with st.spinner("Searching YouTube..."):
             try:
-                import yt_dlp
-                ydl_opts = {
-                    'quiet': True,
-                    'skip_download': True,
-                    'extract_flat': True,
-                    'noplaylist': True,
-                }
-                with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                    info = ydl.extract_info(f"ytsearch5:{search_query}", download=False)
-                    if info and isinstance(info, dict):
-                        st.session_state['search_results'] = info.get('entries', [])
-                    else:
-                        st.session_state['search_results'] = []
-                    st.session_state['search_query'] = search_query
+                from utils.downloader import search_youtube
+                results = search_youtube(search_query, max_results=5)
+                st.session_state['search_results'] = results
+                st.session_state['search_query'] = search_query
             except Exception as e:
                 st.error(f"Search failed: {e}")
                 st.session_state['search_results'] = []

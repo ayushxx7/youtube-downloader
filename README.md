@@ -71,6 +71,12 @@ A simple Streamlit web app to download YouTube videos and audio in various forma
 - `pyproject.toml` — Project dependencies
 - `.gitignore` — Files and folders to exclude from Git
 
+## Tests
+- install requirements from `requirements-dev.txt` and run
+```sh
+   pytest -n auto
+```
+
 ## Contributing
 Pull requests are welcome! For major changes, please open an issue first to discuss what you would like to change.
 
