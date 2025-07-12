@@ -64,3 +64,36 @@ def test_end_to_end_audio_download_flow():
         # Assert Audio Preview is present
         assert "Audio Preview" in page.content()
         browser.close()
+
+
+def test_youtube_search_results():
+    from playwright.sync_api import sync_playwright
+    import time
+
+    with sync_playwright() as p:
+        browser = p.chromium.launch(headless=False)
+        page = browser.new_page()
+        page.goto("http://localhost:8501")
+        # Wait for the search bar to appear by label
+        page.get_by_label("Search for a video").wait_for(timeout=10000)
+        # Enter a search query
+        page.get_by_label("Search for a video").fill("lofi hip hop")
+        # Click the Search button
+        page.click('button:has-text("Search")')
+        # Wait for results to load (results should have thumbnails and URLs)
+        page.wait_for_selector('img[src*="ytimg.com"]', timeout=20000)
+        # Assert at least one result is present
+        thumbnails = page.query_selector_all('img[src*="ytimg.com"]')
+        assert len(thumbnails) > 0, "No search result thumbnails found."
+        # Wait for at least one code block to appear
+        page.wait_for_selector('div[data-testid="stCode"]', timeout=20000)
+        url_code = page.query_selector('div[data-testid="stCode"]')
+        assert url_code is not None, "No code block found in search results."
+
+        # Hover to reveal the copy button
+        url_code.hover()
+        # Wait for the copy button to appear
+        page.wait_for_selector('button[data-testid="stCodeCopyButton"]', timeout=5000)
+        copy_btn = page.query_selector('button[data-testid="stCodeCopyButton"]')
+        assert copy_btn is not None, "Copy button not visible on code block hover."
+        browser.close()
