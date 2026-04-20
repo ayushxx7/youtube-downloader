@@ -26,6 +26,25 @@ This project is well-tested and ready for production use.
 
 ## ✨ Features
 - Download YouTube videos and shorts
+
+## 🏗 Architecture
+The application is built with a clear separation between the UI and the media processing engine.
+
+```mermaid
+graph LR
+    A[Streamlit UI] --> B[Downloader Engine]
+    B --> C[yt-dlp Wrapper]
+    B --> D[FFmpeg Processor]
+    A --> E[Validators]
+    B --> F[File Manager]
+```
+
+### Core Components
+- **Frontend (`app.py`)**: Manages the Streamlit state, user inputs, and real-time progress visualization.
+- **Downloader Engine (`utils/downloader.py`)**: Interfaces with `yt-dlp` to fetch metadata and stream media content.
+- **FFmpeg Processor**: Handles post-processing, audio extraction, and quality merging.
+- **Validators (`utils/validators.py`)**: Surgical URL verification and format checks.
+- **File Manager (`utils/file_manager.py`)**: Manages temporary downloads, naming conventions, and cleanup.
 - Choose video quality and audio format
 - Real-time download progress
 - Download as video+audio or audio-only
